@@ -232,6 +232,13 @@
   .filter-row{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
   .filter-row .chip{white-space:nowrap;}
 
+  /* mobile: stretch the history filter chips so the row ends flush with the
+     summary card above it instead of stopping at the last chip's text */
+  #historyFilters, #historySubFilters{overflow-x:visible;}
+  #historyFilters .chip, #historySubFilters .chip{
+    flex:1 1 auto;min-width:0;text-align:center;padding-left:6px;padding-right:6px;
+  }
+
   /* history: tidy tile grid (shares .mosaic-wrap/.mosaic-row with cat-grid) */
   .hist-tile{
     background:var(--paper-2);border:1.5px solid var(--line);border-radius:14px;
@@ -454,6 +461,10 @@
 
     /* desktop has no auto-zoom behaviour, so keep the original field size */
     input[type=text],input[type=number],input[type=password],textarea,select{font-size:14.5px;}
+
+    /* the stretched filter chips are a mobile-only fix */
+    #historyFilters{overflow-x:auto;}
+    #historyFilters .chip{flex:0 0 auto;padding-left:14px;padding-right:14px;}
 
     .cat-btn{padding:22px 10px;gap:9px;}
     .cat-btn .ic{font-size:32px;}
