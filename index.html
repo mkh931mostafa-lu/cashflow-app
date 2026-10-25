@@ -833,8 +833,45 @@ async function pushStateToGithub(){
 function scheduleGithubSync(){
   if(!getGhToken()) return;
   if(ghSyncTimer) clearTimeout(ghSyncTimer);
-  ghSyncTimer = setTimeout(()=>{ pushStateToGithub(); }, 2500);
+  ghSyncTimer = setTimeout(()=>{ ghSyncTimer = null; pushStateToGithub(); }, 2500);
 }
+
+// Pull the latest data whenever the app is brought back to the foreground.
+// Without this, a standalone/home-screen app that was only suspended (not
+// closed) keeps showing whatever it loaded on its last cold start, so a change
+// made on another device never appears.
+let ghPullInFlight = false;
+async function refreshFromGithubIfIdle(){
+  if(!getGhToken()) return;
+  if(ghSyncTimer) return;   // local changes not pushed yet — pushing wins, don't clobber them
+  if(ghPullInFlight) return;
+  ghPullInFlight = true;
+  try{
+    const remote = await fetchRemoteState();
+    if(remote){
+      if(!remote.loans) remote.loans = [];
+      if(!remote.expenses) remote.expenses = [];
+      if(!remote.incomes) remote.incomes = [];
+      if(!remote.investments) remote.investments = [];
+      if(JSON.stringify(remote) !== JSON.stringify(state)){
+        state = remote;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+        rebuildMonthList();
+        renderAll();
+        renderPendingInstList();
+        toast('دیتا از گیت‌هاب بروزرسانی شد ✓');
+      }
+    }
+  }catch(e){
+    console.error('refresh error', e);
+  }finally{
+    ghPullInFlight = false;
+  }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') refreshFromGithubIfIdle();
+});
+window.addEventListener('focus', ()=>{ refreshFromGithubIfIdle(); });
 
 /* ---------------- local state load/save ---------------- */
 async function loadState(){
