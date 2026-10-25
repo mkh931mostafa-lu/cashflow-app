@@ -239,9 +239,11 @@
     flex:1 1 auto;min-width:0;text-align:center;padding-left:6px;padding-right:6px;
   }
 
-  /* income source chips: every wrapped row stretches to the full width, so the
-     last chip lines up with the free-text field underneath */
-  #incSourceChips .chip{flex:1 1 auto;min-width:0;text-align:center;padding-left:8px;padding-right:8px;}
+  /* income source and expense sub-category chips: every wrapped row stretches
+     to the full width, so the rows end flush with the card instead of ragged */
+  #incSourceChips .chip, #subCatChips .chip{
+    flex:1 1 auto;min-width:0;text-align:center;padding-left:8px;padding-right:8px;
+  }
 
   /* history: tidy tile grid (shares .mosaic-wrap/.mosaic-row with cat-grid) */
   .hist-tile{
@@ -469,9 +471,9 @@
     /* desktop has no auto-zoom behaviour, so keep the original field size */
     input[type=text],input[type=number],input[type=password],textarea,select{font-size:14.5px;}
 
-    /* the stretched filter chips are a mobile-only fix */
+    /* these stretched chips are mobile-only fixes */
     #historyFilters{overflow-x:auto;}
-    #historyFilters .chip{flex:0 0 auto;padding-left:14px;padding-right:14px;}
+    #historyFilters .chip, #subCatChips .chip{flex:0 0 auto;padding-left:14px;padding-right:14px;}
 
     .cat-btn{padding:22px 10px;gap:9px;}
     .cat-btn .ic{font-size:32px;}
