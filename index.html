@@ -239,6 +239,10 @@
     flex:1 1 auto;min-width:0;text-align:center;padding-left:6px;padding-right:6px;
   }
 
+  /* income source chips: every wrapped row stretches to the full width, so the
+     last chip lines up with the free-text field underneath */
+  #incSourceChips .chip{flex:1 1 auto;min-width:0;text-align:center;padding-left:8px;padding-right:8px;}
+
   /* history: tidy tile grid (shares .mosaic-wrap/.mosaic-row with cat-grid) */
   .hist-tile{
     background:var(--paper-2);border:1.5px solid var(--line);border-radius:14px;
@@ -453,6 +457,9 @@
     }
 
     .mosaic-wrap{display:block;}
+    /* the mobile span rules must not leak into these per-row grids — matching
+       selector specificity, so source order decides and these win */
+    .mosaic-row.row3 > *, .mosaic-row.row2 > *, .mosaic-row.row1 > *{grid-column:auto;}
     .mosaic-row{display:grid;gap:12px;margin-top:12px;}
     .mosaic-row:first-child{margin-top:0;}
     .mosaic-row.row3{grid-template-columns:repeat(3,1fr);}
