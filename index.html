@@ -471,9 +471,11 @@
     /* desktop has no auto-zoom behaviour, so keep the original field size */
     input[type=text],input[type=number],input[type=password],textarea,select{font-size:14.5px;}
 
-    /* these stretched chips are mobile-only fixes */
-    #historyFilters{overflow-x:auto;}
-    #historyFilters .chip, #subCatChips .chip{flex:0 0 auto;padding-left:14px;padding-right:14px;}
+    /* history filters stretch here too, so the row ends flush with the cards
+       above it; sub-category chips keep their natural width on desktop */
+    #historyFilters{overflow-x:visible;}
+    #historyFilters .chip{flex:1 1 auto;padding-left:10px;padding-right:10px;}
+    #subCatChips .chip{flex:0 0 auto;padding-left:14px;padding-right:14px;}
 
     .cat-btn{padding:22px 10px;gap:9px;}
     .cat-btn .ic{font-size:32px;}
