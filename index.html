@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Cash Flow Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -125,8 +125,13 @@
     padding:16px;box-shadow:var(--shadow);margin-bottom:14px;
   }
 
-  .mosaic-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  /* 6 columns so a trailing row can stretch to fill the width: 3 tiles span 2
+     each, 2 tiles span 3 each (1.5 tiles wide), a lone tile spans all 6 */
+  .mosaic-wrap{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
   .mosaic-row{display:contents;}
+  .mosaic-row.row3 > *{grid-column:span 2;}
+  .mosaic-row.row2 > *{grid-column:span 3;}
+  .mosaic-row.row1 > *{grid-column:span 6;}
   .cat-btn{
     background:var(--card);border:1.5px solid var(--line);border-radius:12px;
     padding:10px 4px;text-align:center;cursor:pointer;font-family:inherit;
@@ -177,8 +182,10 @@
     position:absolute;top:48px;left:0;right:0;height:24px;pointer-events:none;
     border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);
   }
-  input[type=text],input[type=number],textarea,select{
-    width:100%;font-family:inherit;font-size:14.5px;padding:11px 12px;
+  /* 16px is the floor that stops iOS Safari auto-zooming when a field is
+     focused — below it the page zooms in and never zooms back out */
+  input[type=text],input[type=number],input[type=password],textarea,select{
+    width:100%;font-family:inherit;font-size:16px;padding:11px 12px;
     border:1.5px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--ink);
   }
   input::placeholder,textarea::placeholder{color:#7A7A7A;}
@@ -444,6 +451,9 @@
     .mosaic-row.row3{grid-template-columns:repeat(3,1fr);}
     .mosaic-row.row2{grid-template-columns:repeat(2,1fr);}
     .mosaic-row.row1{grid-template-columns:1fr;}
+
+    /* desktop has no auto-zoom behaviour, so keep the original field size */
+    input[type=text],input[type=number],input[type=password],textarea,select{font-size:14.5px;}
 
     .cat-btn{padding:22px 10px;gap:9px;}
     .cat-btn .ic{font-size:32px;}
@@ -1509,7 +1519,7 @@ function renderHistoryFilters(){
   if(isMobileLayout()){
     // موبایل: منوی خلاصه‌شده — هزینه‌ها / درآمدها / سرمایه‌گذاری / آخرین هزینه‌ها
     // با کلیک روی «هزینه‌ها» یه زیرمنوی ثابت/متغیر/یکبار باز می‌شه
-    const topOpts = [['expense','هزینه‌ها'],['income','درآمدها'],['investment','سرمایه‌گذاری'],['latest','آخرین هزینه‌ها']];
+    const topOpts = [['expense','هزینه'],['income','درآمد'],['investment','سرمایه‌گذاری'],['latest','آخرین هزینه‌ها']];
     const expenseActive = historyFilter==='expense' || EXPENSE_SUB_FILTERS.includes(historyFilter);
     let html = topOpts.map(([k,l])=>{
       const active = (k==='expense') ? expenseActive : historyFilter===k;
@@ -2023,6 +2033,18 @@ async function saveToFile(){
   setTimeout(()=>URL.revokeObjectURL(url), 3000);
   toast('این مرورگر ذخیره مستقیم رو پشتیبانی نمی‌کنه؛ فایل دانلود شد ✓');
 }
+
+// iOS Safari ignores user-scalable=no in the viewport meta, so pinch-zoom and
+// double-tap-zoom have to be blocked directly.
+['gesturestart','gesturechange','gestureend'].forEach(evt=>{
+  document.addEventListener(evt, e=>e.preventDefault(), { passive:false });
+});
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e=>{
+  const now = Date.now();
+  if(now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive:false });
 
 async function init(){
   setSyncDot(getGhToken() ? 'ok' : 'off');
