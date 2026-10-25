@@ -641,10 +641,22 @@ function fmt(n){
 
 const STORAGE_KEY = 'finance-data';
 async function loadState(){
+  const seedHasData = (SEED_EXPENSES.length + SEED_INCOMES.length + SEED_LOANS.length + SEED_INVESTMENTS.length) > 0;
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
       state = JSON.parse(raw);
+      const isCompletelyEmpty = (!state.expenses || state.expenses.length===0) &&
+        (!state.incomes || state.incomes.length===0) &&
+        (!state.loans || state.loans.length===0) &&
+        (!state.investments || state.investments.length===0);
+      // this device never actually entered any data (e.g. stale cache from
+      // an earlier version shipped with blank seed data) — safe to reseed
+      // from the data now baked into this file, since nothing real would be lost
+      if(isCompletelyEmpty && seedHasData){
+        state = { expenses: SEED_EXPENSES.slice(), incomes: SEED_INCOMES.slice(), loans: SEED_LOANS.slice(), investments: SEED_INVESTMENTS.slice() };
+        await saveState();
+      }
     } else {
       state = { expenses: SEED_EXPENSES.slice(), incomes: SEED_INCOMES.slice(), loans: SEED_LOANS.slice(), investments: SEED_INVESTMENTS.slice() };
       await saveState();
@@ -663,7 +675,7 @@ async function saveState(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }catch(e){
     console.error('storage error', e);
-    toast('ذخیره نشد! حافظه مرورگر پره یا در دسترس نیست — از دکمه «ذخیره روی فایل» بکاپ بگیر');
+    toast('ذخیره نشد! حافظه مرورگر پره یا در دسترس نیست');
   }
 }
 
