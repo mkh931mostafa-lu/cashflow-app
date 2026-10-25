@@ -340,6 +340,49 @@
   }
   .toast.show{opacity:1;top:24px;}
 
+  .sync-dot{
+    position:absolute;top:6px;left:calc(50% + 10px);width:8px;height:8px;border-radius:50%;
+  }
+  .sync-dot-off{background:var(--ink-soft);opacity:.5;}
+  .sync-dot-ok{background:#2ecc71;}
+  .sync-dot-err{background:var(--red);}
+  .sync-dot-busy{background:var(--gold);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;
+    display:flex;align-items:flex-end;justify-content:center;
+  }
+  .modal-box{
+    background:var(--card);border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));
+    width:100%;max-width:520px;max-height:85vh;overflow-y:auto;
+    box-shadow:0 -6px 24px rgba(0,0,0,.4);
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .modal-head h3{margin:0;font-size:16px;font-weight:800;}
+  .modal-close{background:none;border:none;color:var(--ink-soft);font-size:16px;cursor:pointer;padding:4px 8px;}
+  .modal-desc{font-size:12.5px;color:var(--ink-soft);line-height:1.9;margin:0 0 10px;}
+  .sync-status-line{font-size:12.5px;margin-bottom:6px;}
+  #syncStatusText{font-weight:700;}
+  #syncTokenInput{
+    width:100%;box-sizing:border-box;background:var(--paper-2);border:1px solid var(--line);
+    border-radius:10px;padding:11px 12px;color:var(--ink);font-family:inherit;font-size:13px;direction:ltr;text-align:left;
+  }
+  .modal-btn-row{display:flex;gap:8px;margin-top:12px;}
+  .modal-btn-row button{flex:1;}
+  .btn-primary{background:var(--gold);color:#1a1200;border:none;border-radius:10px;padding:11px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;}
+  .btn-secondary{background:var(--paper-2);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:11px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;}
+  .btn-danger-link{display:block;width:100%;background:none;border:none;color:var(--red);font-size:12px;margin-top:12px;cursor:pointer;font-family:inherit;padding:6px;}
+  .modal-help{margin-top:14px;font-size:12px;color:var(--ink-soft);}
+  .modal-help summary{cursor:pointer;font-weight:700;color:var(--ink);margin-bottom:8px;}
+  .modal-help ol{margin:0 0 10px;padding-right:18px;line-height:2;}
+  .modal-help p{line-height:1.8;margin:0;}
+
+  @media (min-width: 900px){
+    .modal-overlay{align-items:center;}
+    .modal-box{border-radius:18px;max-width:460px;}
+  }
+
   /* ---- laptop / desktop layout: real sidebar, rebuilt from scratch ---- */
   @media (min-width: 900px){
     body{padding-bottom:0;}
@@ -429,8 +472,41 @@
       <button class="navbtn" data-tab="income"><span class="ic">➕</span><span class="nm">ورودی مالی</span></button>
       <button class="navbtn" data-tab="loans"><span class="ic">🏦</span><span class="nm">وام‌ها</span></button>
       <button class="navbtn" data-tab="history"><span class="ic">📜</span><span class="nm">تاریخچه</span></button>
+      <button class="navbtn navbtn-util" id="syncSettingsBtn" style="position:relative;">
+        <span class="ic">🔗</span><span class="nm">همگام‌سازی</span>
+        <span id="syncDot" class="sync-dot sync-dot-off"></span>
+      </button>
     </div>
   </nav>
+
+  <div class="modal-overlay" id="syncModal" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>همگام‌سازی با گیت‌هاب</h3>
+        <button class="modal-close" id="syncModalClose">✕</button>
+      </div>
+      <p class="modal-desc">با وصل کردن یه توکن گیت‌هاب، هر تغییری که تو اپ میدی خودکار رو ریپازیتوری <b>mkh931mostafa-lu/cashflow-app</b> ذخیره میشه و از هر دستگاهی که همین توکن رو وارد کنی دیتا یکی میمونه.</p>
+      <div id="syncStatusLine" class="sync-status-line">وضعیت: <span id="syncStatusText">متصل نیست</span></div>
+      <label class="f" style="margin-top:10px;">توکن دسترسی گیت‌هاب (Fine-grained PAT)</label>
+      <input type="password" id="syncTokenInput" placeholder="github_pat_xxxxxxxx" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="modal-btn-row">
+        <button class="btn-primary" id="syncSaveBtn">ذخیره و اتصال</button>
+        <button class="btn-secondary" id="syncNowBtn">همگام‌سازی الان</button>
+      </div>
+      <button class="btn-danger-link" id="syncDisconnectBtn">قطع اتصال و حذف توکن از این دستگاه</button>
+      <details class="modal-help">
+        <summary>چطور توکن بسازم؟</summary>
+        <ol>
+          <li>برو به github.com → تنظیمات حساب (Settings) → پایین صفحه <b>Developer settings</b></li>
+          <li><b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b></li>
+          <li>در بخش <b>Repository access</b>، گزینه «Only select repositories» رو بزن و فقط ریپوی <b>cashflow-app</b> رو انتخاب کن (نه بقیه سایت‌هات)</li>
+          <li>در بخش <b>Permissions → Repository permissions</b>، برای <b>Contents</b> مقدار «Read and write» رو انتخاب کن — بقیه رو دست نزن</li>
+          <li>Generate token بزن، کدی که میده رو کپی کن و همینجا پیست کن</li>
+        </ol>
+        <p>این توکن فقط رو همین گوشی/مرورگرت ذخیره میشه و هیچ‌وقت داخل خود کد یا ریپوی عمومی قرار نمی‌گیره. چون توکن رو فقط به همین یه ریپو محدود کردی، به سایت‌های دیگه‌ت هیچ دسترسی‌ای نداره.</p>
+      </details>
+    </div>
+  </div>
 
   <main>
 
@@ -640,8 +716,147 @@ function fmt(n){
 }
 
 const STORAGE_KEY = 'finance-data';
+
+/* ---------------- GitHub sync ---------------- */
+const GH_REPO = 'mkh931mostafa-lu/cashflow-app';
+const GH_DATA_PATH = 'data.json';
+const GH_TOKEN_KEY = 'gh_sync_token';
+const GH_LAST_SYNC_KEY = 'gh_last_sync';
+let ghSyncTimer = null;
+let ghKnownSha = null; // sha of data.json as last seen from GitHub, used for safe writes
+
+function getGhToken(){
+  try{ return localStorage.getItem(GH_TOKEN_KEY) || ''; }catch(e){ return ''; }
+}
+function setGhToken(t){
+  try{ localStorage.setItem(GH_TOKEN_KEY, t); }catch(e){}
+}
+function clearGhToken(){
+  try{ localStorage.removeItem(GH_TOKEN_KEY); localStorage.removeItem(GH_LAST_SYNC_KEY); }catch(e){}
+  ghKnownSha = null;
+}
+function utf8ToB64(str){
+  return btoa(unescape(encodeURIComponent(str)));
+}
+function b64ToUtf8(str){
+  return decodeURIComponent(escape(atob(str)));
+}
+function setSyncDot(mode){
+  const dot = document.getElementById('syncDot');
+  if(!dot) return;
+  dot.className = 'sync-dot sync-dot-' + mode;
+}
+function setSyncStatusText(text){
+  const el = document.getElementById('syncStatusText');
+  if(el) el.textContent = text;
+}
+
+async function fetchRemoteState(){
+  const token = getGhToken();
+  if(!token) return null;
+  setSyncDot('busy');
+  try{
+    const resp = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_DATA_PATH}`, {
+      headers:{ 'Authorization':'token '+token, 'Accept':'application/vnd.github+json' },
+      cache:'no-store'
+    });
+    if(resp.status===404){
+      // file doesn't exist on GitHub yet — not an error, just nothing to pull
+      ghKnownSha = null;
+      setSyncDot('off');
+      return null;
+    }
+    if(!resp.ok){
+      setSyncDot('err');
+      return null;
+    }
+    const j = await resp.json();
+    ghKnownSha = j.sha;
+    const parsed = JSON.parse(b64ToUtf8(j.content.replace(/\n/g,'')));
+    setSyncDot('ok');
+    try{ localStorage.setItem(GH_LAST_SYNC_KEY, new Date().toISOString()); }catch(e){}
+    return parsed;
+  }catch(e){
+    console.error('github fetch error', e);
+    setSyncDot('err');
+    return null;
+  }
+}
+
+async function pushStateToGithub(){
+  const token = getGhToken();
+  if(!token) return;
+  setSyncDot('busy');
+  try{
+    // always refresh the sha right before writing, in case the file changed
+    // (e.g. another device synced) since we last fetched it
+    try{
+      const getResp = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_DATA_PATH}`, {
+        headers:{ 'Authorization':'token '+token, 'Accept':'application/vnd.github+json' },
+        cache:'no-store'
+      });
+      if(getResp.ok){ const j = await getResp.json(); ghKnownSha = j.sha; }
+      else if(getResp.status===404){ ghKnownSha = null; }
+    }catch(e){}
+
+    const body = {
+      message: 'بروزرسانی دیتا — ' + new Date().toISOString(),
+      content: utf8ToB64(JSON.stringify(state)),
+      branch: 'main'
+    };
+    if(ghKnownSha) body.sha = ghKnownSha;
+
+    const putResp = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_DATA_PATH}`, {
+      method:'PUT',
+      headers:{ 'Authorization':'token '+token, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+    if(!putResp.ok){
+      setSyncDot('err');
+      const errBody = await putResp.json().catch(()=>({}));
+      console.error('github push error', putResp.status, errBody);
+      if(putResp.status===401 || putResp.status===403){
+        toast('اتصال گیت‌هاب قطعه — توکن نامعتبره یا دسترسی نداره');
+      }
+      return;
+    }
+    const j = await putResp.json();
+    ghKnownSha = j.content && j.content.sha;
+    setSyncDot('ok');
+    try{ localStorage.setItem(GH_LAST_SYNC_KEY, new Date().toISOString()); }catch(e){}
+  }catch(e){
+    console.error('github push exception', e);
+    setSyncDot('err');
+  }
+}
+
+function scheduleGithubSync(){
+  if(!getGhToken()) return;
+  if(ghSyncTimer) clearTimeout(ghSyncTimer);
+  ghSyncTimer = setTimeout(()=>{ pushStateToGithub(); }, 2500);
+}
+
+/* ---------------- local state load/save ---------------- */
 async function loadState(){
   const seedHasData = (SEED_EXPENSES.length + SEED_INCOMES.length + SEED_LOANS.length + SEED_INVESTMENTS.length) > 0;
+
+  // if a GitHub token is connected, GitHub is the source of truth — try it first
+  if(getGhToken()){
+    const remote = await fetchRemoteState();
+    if(remote){
+      state = remote;
+      if(!state.loans) state.loans = [];
+      if(!state.expenses) state.expenses = [];
+      if(!state.incomes) state.incomes = [];
+      if(!state.investments) state.investments = [];
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+      return;
+    }
+    // remote fetch failed (offline) or file doesn't exist yet on GitHub —
+    // fall through to local-first logic below, and if the file simply
+    // doesn't exist yet we'll create it on the next save
+  }
+
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(raw){
@@ -677,6 +892,7 @@ async function saveState(){
     console.error('storage error', e);
     toast('ذخیره نشد! حافظه مرورگر پره یا در دسترس نیست');
   }
+  scheduleGithubSync();
 }
 
 function monthKeyOf(dateStr){
@@ -1607,6 +1823,74 @@ document.querySelectorAll('.navbtn:not(.navbtn-util)').forEach(btn=>{
   };
 });
 
+function refreshSyncModalStatus(){
+  const token = getGhToken();
+  const input = document.getElementById('syncTokenInput');
+  if(token){
+    input.value = token;
+    let lastSync = '';
+    try{ lastSync = localStorage.getItem(GH_LAST_SYNC_KEY) || ''; }catch(e){}
+    if(lastSync){
+      const d = new Date(lastSync);
+      setSyncStatusText('متصل — آخرین همگام‌سازی ' + d.toLocaleTimeString('fa-IR'));
+    } else {
+      setSyncStatusText('متصل');
+    }
+  } else {
+    input.value = '';
+    setSyncStatusText('متصل نیست — فقط رو همین گوشی ذخیره میشه');
+  }
+}
+function openSyncModal(){
+  refreshSyncModalStatus();
+  document.getElementById('syncModal').style.display = 'flex';
+}
+function closeSyncModal(){
+  document.getElementById('syncModal').style.display = 'none';
+}
+document.getElementById('syncSettingsBtn').onclick = openSyncModal;
+document.getElementById('syncModalClose').onclick = closeSyncModal;
+document.getElementById('syncModal').onclick = (e)=>{ if(e.target.id==='syncModal') closeSyncModal(); };
+document.getElementById('syncSaveBtn').onclick = async ()=>{
+  const val = document.getElementById('syncTokenInput').value.trim();
+  if(!val){ toast('اول توکن رو وارد کن'); return; }
+  setGhToken(val);
+  setSyncStatusText('در حال بررسی اتصال...');
+  const remote = await fetchRemoteState();
+  if(remote){
+    state = remote;
+    if(!state.loans) state.loans = [];
+    if(!state.expenses) state.expenses = [];
+    if(!state.incomes) state.incomes = [];
+    if(!state.investments) state.investments = [];
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+    rebuildMonthList();
+    renderAll();
+    renderPendingInstList();
+    toast('وصل شد و دیتای گیت‌هاب لود شد ✓');
+  } else {
+    // either the file doesn't exist on GitHub yet (first connect from this
+    // device) or we're offline — push whatever this device currently has
+    await pushStateToGithub();
+    toast('وصل شد، دیتای این دستگاه رو گیت‌هاب ذخیره شد ✓');
+  }
+  refreshSyncModalStatus();
+};
+document.getElementById('syncNowBtn').onclick = async ()=>{
+  if(!getGhToken()){ toast('اول باید توکن رو وارد و ذخیره کنی'); return; }
+  setSyncStatusText('در حال همگام‌سازی...');
+  await pushStateToGithub();
+  refreshSyncModalStatus();
+  toast('همگام‌سازی انجام شد ✓');
+};
+document.getElementById('syncDisconnectBtn').onclick = ()=>{
+  if(!confirm('اتصال به گیت‌هاب قطع بشه؟ توکن از این گوشی پاک میشه (دیتای خود گیت‌هاب دست نمی‌خوره).')) return;
+  clearGhToken();
+  setSyncDot('off');
+  refreshSyncModalStatus();
+  toast('اتصال قطع شد');
+};
+
 function renderAll(){
   renderMonthSwitch();
   renderDashboard();
@@ -1704,6 +1988,7 @@ async function saveToFile(){
 }
 
 async function init(){
+  setSyncDot(getGhToken() ? 'ok' : 'off');
   await loadState();
   rebuildMonthList();
   renderMainCatGrid();
