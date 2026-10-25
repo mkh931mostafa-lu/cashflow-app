@@ -1588,7 +1588,7 @@ function renderHistoryFilters(){
   // دسکتاپ/لپ‌تاپ: همون منوی کامل قبلی، دست‌نخورده
   const oldSub = document.getElementById('historySubFilters');
   if(oldSub){ oldSub.remove(); }
-  const opts = [['expense','هزینه‌ها'],['income','درآمدها'],['investment','سرمایه‌گذاری'],['fixed','هزینه‌های ثابت'],['variable','هزینه‌های متغیر'],['once','هزینه‌های یکبار'],['latest','آخرین هزینه‌ها']];
+  const opts = [['expense','هزینه'],['income','درآمد'],['investment','سرمایه‌گذاری'],['fixed','هزینه‌های ثابت'],['variable','هزینه‌های متغیر'],['once','هزینه‌های یکبار'],['latest','آخرین هزینه‌ها']];
   wrap.innerHTML = opts.map(([k,l])=>`<button class="chip ${historyFilter===k?'active':''}" data-f="${k}">${l}</button>`).join('');
   wrap.querySelectorAll('.chip').forEach(ch=>{
     ch.onclick = ()=>{
