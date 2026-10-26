@@ -354,11 +354,11 @@
   h2.h{font-size:16px;font-weight:800;margin:0 0 4px;}
   .sub-h{font-size:12px;color:var(--ink-soft);margin:0 0 14px;}
   .toast{
-    position:fixed;top:14px;left:50%;transform:translateX(-50%);
+    position:fixed;top:calc(env(safe-area-inset-top, 0px) + 14px);left:50%;transform:translateX(-50%);
     background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:20px;font-size:13px;
     font-weight:600;z-index:100;opacity:0;transition:opacity .25s, top .25s;pointer-events:none;
   }
-  .toast.show{opacity:1;top:24px;}
+  .toast.show{opacity:1;top:calc(env(safe-area-inset-top, 0px) + 24px);}
 
   .sync-dot{
     position:absolute;top:6px;left:calc(50% + 10px);width:8px;height:8px;border-radius:50%;
@@ -815,7 +815,7 @@ async function fetchRemoteState(){
   }
 }
 
-async function pushStateToGithub(){
+async function pushStateToGithub(isRetry){
   const token = getGhToken();
   if(!token) return;
   setSyncDot('busy');
@@ -849,6 +849,15 @@ async function pushStateToGithub(){
       console.error('github push error', putResp.status, errBody);
       if(putResp.status===401 || putResp.status===403){
         toast('اتصال گیت‌هاب قطعه — توکن نامعتبره یا دسترسی نداره');
+        return;
+      }
+      if(!isRetry){
+        // transient failure (e.g. a sha conflict from another device syncing at the
+        // same moment, or a dropped connection) — try again once automatically
+        // instead of silently leaving this change unsynced until the next edit.
+        setTimeout(()=>{ pushStateToGithub(true); }, 4000);
+      } else {
+        toast('ذخیره تو گیت‌هاب انجام نشد — اتصال اینترنت رو چک کن');
       }
       return;
     }
@@ -856,9 +865,15 @@ async function pushStateToGithub(){
     ghKnownSha = j.content && j.content.sha;
     setSyncDot('ok');
     try{ localStorage.setItem(GH_LAST_SYNC_KEY, new Date().toISOString()); }catch(e){}
+    if(typeof refreshSyncModalStatus === 'function') refreshSyncModalStatus();
   }catch(e){
     console.error('github push exception', e);
     setSyncDot('err');
+    if(!isRetry){
+      setTimeout(()=>{ pushStateToGithub(true); }, 4000);
+    } else {
+      toast('ذخیره تو گیت‌هاب انجام نشد — اتصال اینترنت رو چک کن');
+    }
   }
 }
 
